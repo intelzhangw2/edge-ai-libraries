@@ -114,12 +114,16 @@ static void getOptions(int argc, char** argv)
         switch (index)
         {
         case 'c':
-            if (config_file)
+            if (config_file) {
                 free(config_file);
+                config_file = nullptr;
+            }
             config_file = static_cast<char*>(malloc(strlen(optarg) + 1));
-            memset(config_file, 0, strlen(optarg) + 1);
-            memmove(config_file, optarg, strlen(optarg) + 1);
-            printf("Using %s\n", config_file);
+            if (config_file) {
+                memset(config_file, 0, strlen(optarg) + 1);
+                memmove(config_file, optarg, strlen(optarg) + 1);
+                printf("Using %s\n", config_file);
+            }
             break;
         case 'm':
             node_id = (unsigned int)atoi(optarg);
@@ -698,6 +702,10 @@ int main(int argc, char* argv[])
     if(!virtual_servo)
     {
         motion_servo_master_release(masters);
+    }
+    if (config_file) {
+        free(config_file);
+        config_file = nullptr;
     }
     return 0;
 }
