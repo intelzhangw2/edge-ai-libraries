@@ -175,6 +175,11 @@ servo_master* motion_servo_master_create_v2(uint16_t node_id)
 Init_Master_Fail:
     if (servomaster) {
         motion_servo_free_master_list(&servomaster->list);
+        if (servomaster->master) {
+            ecat_free(servomaster->master);
+            servomaster->master = NULL;
+        }
+        ecat_free(servomaster);
         servomaster = NULL;
     }
     return NULL;
@@ -922,12 +927,15 @@ static int motion_servo_slave_config_register_v2(servo_master_t* master, eni_con
 
                     slave_t->domain_tx_pd = (ecat_domain*)ecat_malloc(sizeof(ecat_domain));
                     if (!slave_t->domain_tx_pd) {
-                        return NULL;
+                        motion_slave_free_syncs(slave_syncs);
+                        return ECAT_FAIL;
                     }
                     memset(slave_t->domain_tx_pd, 0, sizeof(ecat_domain));
                     slave_t->domain_rx_pd = (ecat_domain*)ecat_malloc(sizeof(ecat_domain));
                     if (!slave_t->domain_rx_pd) {
-                        return NULL;
+                        ecat_free(slave_t->domain_tx_pd);
+                        motion_slave_free_syncs(slave_syncs);
+                        return ECAT_FAIL;
                     }
                     memset(slave_t->domain_rx_pd, 0, sizeof(ecat_domain));
                     slave_t->domain_tx_pd->domain = (void*)ecrt_master_create_domain(master->master);

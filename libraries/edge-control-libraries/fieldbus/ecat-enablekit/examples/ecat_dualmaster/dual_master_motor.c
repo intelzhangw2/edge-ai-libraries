@@ -40,6 +40,7 @@
 #define CYCLE_COUNTER_PERSEC	(NSEC_PER_SEC/PERIOD_NS)
 
 static pthread_t cyclic_thread;
+static pthread_t cyclic_thread1;
 static volatile int run = 1;
 static servo_master* masters = NULL;
 
@@ -238,7 +239,7 @@ int main (int argc, char **argv)
         return -1;
     }
     master1 = motion_servo_master_request(masters, eni_file, 1);
-    if (master == NULL) {
+    if (master1 == NULL) {
         return -1;
     }
     free(eni_file);
@@ -322,7 +323,7 @@ int main (int argc, char **argv)
         pthread_attr_destroy(&thattr);
         goto End;
     }
-    if (pthread_create(&cyclic_thread, &thattr, &my_thread, master1)) {
+    if (pthread_create(&cyclic_thread1, &thattr, &my_thread, master1)) {
         printf("pthread_create cyclic task failed\n");
         pthread_attr_destroy(&thattr);
         goto End;
@@ -338,12 +339,19 @@ int main (int argc, char **argv)
     }
 
     pthread_join(cyclic_thread, NULL);
+    pthread_join(cyclic_thread1, NULL);
     pthread_attr_destroy(&thattr);
 
     motion_servo_master_release(master);
+    motion_servo_master_release(master1);
     return 0;
 End:
-    motion_servo_master_release(master);
+    if (master1) {
+        motion_servo_master_release(master1);
+    }
+    if (master) {
+        motion_servo_master_release(master);
+    }
     return -1;
 }
 
